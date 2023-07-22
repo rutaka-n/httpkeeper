@@ -21,9 +21,7 @@ func NewProxyCommand() *ProxyCommand {
 		fs: flag.NewFlagSet("proxy", flag.ExitOnError),
 	}
 
-	pc.fs.StringVar(&pc.addr, "addr", "localhost:3000", "addres of the proxy service")
 	pc.fs.StringVar(&pc.config, "config", "./config.json", "path to configuration file")
-	pc.fs.StringVar(&pc.logFile, "log", "./httpkeeper.log", "path to log file")
 
 	return pc
 }
@@ -31,9 +29,7 @@ func NewProxyCommand() *ProxyCommand {
 // ProxyCommand contains flags related to proxy command
 type ProxyCommand struct {
 	fs      *flag.FlagSet
-	addr    string
 	config  string
-	logFile string
 }
 
 // Init initializes flagset with args
@@ -47,26 +43,26 @@ func (pc *ProxyCommand) Name() string {
 }
 
 func (pc *ProxyCommand) loadConfig(server *proxy.Proxy) error {
-	conf, err := config.Load(pc.config)
+	cfg, err := config.Load(pc.config)
 	if err != nil {
 		return err
 	}
-	server.SetSecret(conf.Server.Secret)
-	server.SetServiceName(conf.Server.Name)
-	server.SetServices(conf.Services)
-	server.SetInvalidatedTokens(conf.InvalidatedTokens)
+	server.SetSecret(cfg.Server.Secret)
+	server.SetServiceName(cfg.Server.Name)
+	server.SetServices(cfg.Services)
+	server.SetInvalidatedTokens(cfg.InvalidatedTokens)
 	return nil
 }
 
 // Run starts the proxy server.
 func (pc *ProxyCommand) Run() error {
-	conf, err := config.Load(pc.config)
+	cfg, err := config.Load(pc.config)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "cannot load config: %v\n", err)
 		os.Exit(1)
 	}
 
-	logFile, err := os.OpenFile(conf.Server.LogFile, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
+	logFile, err := os.OpenFile(cfg.Server.LogFile, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "cannot open log file: %v\n", err)
 		os.Exit(1)
@@ -74,13 +70,17 @@ func (pc *ProxyCommand) Run() error {
 	defer logFile.Close()
 
 	log.SetOutput(logFile)
-	log.Printf("starting proxy on %v", conf.Server.Addr)
+	log.Printf("starting proxy on %v", cfg.Server.Addr)
 
-	server := proxy.New(conf.Server.Addr)
-	server.SetSecret(conf.Server.Secret)
-	server.SetServiceName(conf.Server.Name)
-	server.SetServices(conf.Services)
-	server.SetInvalidatedTokens(conf.InvalidatedTokens)
+	server := proxy.New(cfg.Server.Addr,
+		cfg.Server.ReadTimeout,
+		cfg.Server.WriteTimeout,
+		cfg.Server.IdleTimeout,
+	)
+	server.SetSecret(cfg.Server.Secret)
+	server.SetServiceName(cfg.Server.Name)
+	server.SetServices(cfg.Services)
+	server.SetInvalidatedTokens(cfg.InvalidatedTokens)
 
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGTERM, syscall.SIGQUIT, syscall.SIGINT)
 	defer cancel()
@@ -102,9 +102,9 @@ func (pc *ProxyCommand) Run() error {
 			}
 			log.Printf("config is reloaded")
 		case <-ctx.Done():
-			closeCtx, cancel := context.WithTimeout(context.Background(), time.Duration(conf.Server.ShutdownTimeout)*time.Second)
+			closeCtx, cancel := context.WithTimeout(context.Background(), time.Duration(cfg.Server.ShutdownTimeout)*time.Second)
 			defer cancel()
-			log.Printf("shutting down server, timeout: %vs", conf.Server.ShutdownTimeout)
+			log.Printf("shutting down server, timeout: %vs", cfg.Server.ShutdownTimeout)
 			if err := server.Shutdown(closeCtx); err != nil {
 				if errors.Is(err, context.DeadlineExceeded) {
 					log.Printf("Shutdown timeout deadline exceeded")
@@ -112,7 +112,7 @@ func (pc *ProxyCommand) Run() error {
 			}
 			os.Exit(0)
 		case err := <-serverErr:
-			log.Printf("server failed to bind on %v, error: %v", conf.Server.Addr, err)
+			log.Printf("server failed to bind on %v, error: %v", cfg.Server.Addr, err)
 			os.Exit(1)
 		}
 	}

@@ -4,7 +4,10 @@
     "addr": "0.0.0.0:3000",
     "log_file": "/dev/stdout",
     "secret": "6232a1a0fd6208b18e8410ddba19cc9759472cb115910c72dea2bd2807c1fc1d40d29900bbd6b063590697b8252d85c4b05a0b747e6363af1c265d2fc6c570c4",
-    "shutdown_timeout_s": 5
+    "shutdown_timeout_s": 5,
+    "read_timeout_s": 5,
+    "write_timeout_s": 10,
+    "idle_timeout_s": 120
   },
   "invalidated_tokens": [],
   "services": [

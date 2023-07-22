@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"strings"
+	"time"
 
 	"httpkeeper/config"
 	"httpkeeper/token"
@@ -24,11 +25,14 @@ type Proxy struct {
 	InvalidatedTokens gs.Set[string]
 }
 
-// New returns Proxy initialized with addr
-func New(addr string) *Proxy {
+// New returns Proxy initialized with addr, and server timeouts
+func New(addr string, readTimeout, writeTimeout, idleTimeout int64) *Proxy {
 	return &Proxy{
 		server: http.Server{
-			Addr: addr,
+			ReadTimeout:  time.Duration(readTimeout) * time.Second,
+			WriteTimeout: time.Duration(writeTimeout) * time.Second,
+			IdleTimeout:  time.Duration(idleTimeout) * time.Second,
+			Addr:         addr,
 		},
 	}
 }

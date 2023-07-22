@@ -22,6 +22,9 @@ type (
 		Secret          []byte `json:"secret"`
 		Name            string `json:"name"`
 		ShutdownTimeout int64  `json:"shutdown_timeout_s"`
+		ReadTimeout     int64  `json:"read_timeout_s"`
+		WriteTimeout    int64  `json:"write_timeout_s"`
+		IdleTimeout     int64  `json:"idle_timeout_s"`
 	}
 
 	// ConfigURL wrapper for net/url.URL

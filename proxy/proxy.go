@@ -133,7 +133,7 @@ func (p *Proxy) handler(rw http.ResponseWriter, req *http.Request) {
 	req.Host = service.URL.Host
 	req.URL.Host = service.URL.Host
 	req.URL.Scheme = service.URL.Scheme
-	req.RequestURI = "" // IS IT NEEDED?
+	req.RequestURI = "" // Set to empty line since RequestURI shouldn't set for clients request
 	if service.IsBasicAuth() {
 		req.SetBasicAuth(service.BasicAuth.User, service.BasicAuth.Password)
 	}

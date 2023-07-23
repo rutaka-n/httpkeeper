@@ -7,6 +7,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 
@@ -113,16 +114,16 @@ func (p *Proxy) handler(rw http.ResponseWriter, req *http.Request) {
 	host := p.getHost(req)
 	service, ok := p.Services[host]
 	if !ok {
-		log.Printf(requestLogMsg+" - %d, service not configured", http.StatusForbidden)
-		rw.WriteHeader(http.StatusForbidden)
+		log.Printf(requestLogMsg+" - %d, service not configured", http.StatusServiceUnavailable)
+		rw.WriteHeader(http.StatusServiceUnavailable)
 		return
 	}
 
 	if service.IsJWTEnabled() {
 		err := p.authWithToken(req)
 		if err != nil {
-			log.Printf(requestLogMsg+" - %d, %v", http.StatusProxyAuthRequired, err)
-			rw.WriteHeader(http.StatusProxyAuthRequired)
+			log.Printf(requestLogMsg+" - %d, %v", http.StatusUnauthorized, err)
+			rw.WriteHeader(http.StatusUnauthorized)
 			return
 		}
 	}
@@ -145,6 +146,12 @@ func (p *Proxy) handler(rw http.ResponseWriter, req *http.Request) {
 	// save the response from the origin server
 	originServerResponse, err := http.DefaultClient.Do(req)
 	if err != nil {
+		if urlErr, ok = url.Error(err); ok && urlErr.Timeout() {
+			rw.WriteHeader(http.StatusGatewayTimeout)
+			_, _ = fmt.Fprint(rw, err)
+			log.Printf(requestLogMsg+" - %d", http.StatusGatewayTimeout)
+			return
+		}
 		rw.WriteHeader(http.StatusInternalServerError)
 		_, _ = fmt.Fprint(rw, err)
 		log.Printf(requestLogMsg+" - %d", http.StatusInternalServerError)

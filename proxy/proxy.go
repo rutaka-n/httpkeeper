@@ -7,7 +7,6 @@ import (
 	"io"
 	"log"
 	"net/http"
-	"net/url"
 	"strings"
 	"time"
 
@@ -146,12 +145,6 @@ func (p *Proxy) handler(rw http.ResponseWriter, req *http.Request) {
 	// save the response from the origin server
 	originServerResponse, err := http.DefaultClient.Do(req)
 	if err != nil {
-		if urlErr, ok = url.Error(err); ok && urlErr.Timeout() {
-			rw.WriteHeader(http.StatusGatewayTimeout)
-			_, _ = fmt.Fprint(rw, err)
-			log.Printf(requestLogMsg+" - %d", http.StatusGatewayTimeout)
-			return
-		}
 		rw.WriteHeader(http.StatusInternalServerError)
 		_, _ = fmt.Fprint(rw, err)
 		log.Printf(requestLogMsg+" - %d", http.StatusInternalServerError)

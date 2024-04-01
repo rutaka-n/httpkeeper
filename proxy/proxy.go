@@ -22,7 +22,7 @@ type Proxy struct {
 	Secret            []byte
 	ServiceName       string
 	server            http.Server
-	InvalidatedTokens gs.Set[string]
+	InvalidatedTokens *gs.Set[string]
 }
 
 // New returns Proxy initialized with addr, and server timeouts
@@ -60,7 +60,7 @@ func (p *Proxy) SetServices(services []config.Service) {
 func (p *Proxy) SetInvalidatedTokens(tokens []string) {
 	set := gs.New[string]()
 	set.Add(tokens...)
-	p.InvalidatedTokens = set
+	p.InvalidatedTokens = &set
 }
 
 // ListenAndServe binds port and starts listening

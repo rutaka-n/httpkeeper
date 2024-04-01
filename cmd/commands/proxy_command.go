@@ -85,7 +85,7 @@ func (pc *ProxyCommand) Run() error {
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGTERM, syscall.SIGQUIT, syscall.SIGINT)
 	defer cancel()
 
-	reloadSigChan := make(chan os.Signal)
+	reloadSigChan := make(chan os.Signal, 1)
 	signal.Notify(reloadSigChan, syscall.SIGUSR1)
 
 	serverErr := make(chan error)
@@ -116,5 +116,4 @@ func (pc *ProxyCommand) Run() error {
 			os.Exit(1)
 		}
 	}
-	return nil
 }

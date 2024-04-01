@@ -6,9 +6,14 @@ It allows to:
 - set the rate limit for upstream
 - set invalidated tokens
 
-## Instalation
+## Installation
+
+Download the archive from release page, extract the executable file, and add into your path.
 
 ## Configuration
+
+You can find the example of configuration file in `share/config.json`
+**Note:** Please change the `server.secret`.
 
 ## Usage
 
@@ -38,7 +43,6 @@ $ httpkeeper proxy -config path/to/config.json [-addr addr:port] [-log path/to/h
 
 ## TODO
 * set/check list of services in the token
-* TCP timeouts
 * TLS
 * control script
 * install.sh
